@@ -50,17 +50,38 @@ struct job_def jobBuffer[BUFF_SIZE - 1];
  *  * The run command - submit a job.
  *   */
 int cmd_run(int nargs, char **args) { 
+	char *context;
+	char *word;
+	char cmd[nargs];
+	int i = 0;
 	if (nargs != 4) {
 		return EINVAL;
 	}
-	char cmd[nargs];
-	strcpy(cmd, args);
-	char *input = strtok(cmd, " ");
-	sscanf(input, "%s", &jobBuffer[buf_head].name);	
-	sscanf(input, "%d", &jobBuffer[buf_head].arg1);	
-	sscanf(input, "%d", &jobBuffer[buf_head].arg2);	
-	sscanf(input, "%d", &jobBuffer[buf_head].priority);	
-	sscanf(input, "%d", &jobBuffer[buf_head].burst);	
+	for (word = strtok_r(cmd, " ", &context);
+		word != NULL;
+		word = strtok_r(NULL, " ", &context)) {
+		cmd[i++] = word;
+	}
+	printf("\nmade it here\n");
+
+	for (i=0;i<nargs;i++) {
+		printf("\n%s", args[i]);
+	}
+
+	//jobBuffer[buf_head].name = args[0];	
+	//jobBuffer[buf_head].arg1 = args[1];	
+	//jobBuffer[buf_head].arg2 = args[2];	
+	//jobBuffer[buf_head].priority = args[3];	
+	//jobBuffer[buf_head].burst= args[4];
+	//test stuff
+	printf("\n%d",jobBuffer[buf_head].name);
+	printf("\n%d",jobBuffer[buf_head].arg1);
+	printf("\n%d",jobBuffer[buf_head].arg2);
+	printf("\n%d",jobBuffer[buf_head].priority);
+	printf("\n%d",jobBuffer[buf_head].burst);
+
+
+	// end test stuff
 	count = count + 1;
 	buf_head = buf_head + 1;
 	jobBuffer[buf_head].position = buf_head;
@@ -175,7 +196,6 @@ int dispatch(char *cmd) {
 	char *word;
 	char *context;
 	int i, result;
-
 	for (word = strtok_r(cmd, " ", &context);
 		word != NULL;
 		word = strtok_r(NULL, " ", &context)) {
@@ -191,7 +211,10 @@ int dispatch(char *cmd) {
 	for(i = 0; cmdtable[i].name; i++) {
 		if(*cmdtable[i].name && !strcmp(args[0], cmdtable[i].name)) {
 			assert(cmdtable[i].func != NULL);
-			//call function here maybe?
+			//call function here maybe?i
+			for (i=0;i<nargs;i++) {
+				printf("\n%s", args[i]);
+			}
 			result = cmdtable[i].func(nargs, args);
 			return result;
 		}
@@ -221,6 +244,7 @@ void *commandLine() {
 		//prompt for input
 		printf("\n>");
 		getline(&input, &command_size, stdin);
+		printf("%s", input);
 		dispatch(input);
 	}
 
