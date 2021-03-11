@@ -7,7 +7,7 @@
 #include <assert.h>
 
 #define BUFF_SIZE 15
-#define NUM_OF_CMD 5
+#define NUM_OF_CMD 999999999
 //pthread
 pthread_mutex_t cmd_queue_lock;
 pthread_cond_t cmd_buf_not_full;
@@ -50,37 +50,14 @@ struct job_def jobBuffer[BUFF_SIZE - 1];
  *  * The run command - submit a job.
  *   */
 int cmd_run(int nargs, char **args) { 
-	char *context;
-	char *word;
-	char cmd[nargs];
 	int i = 0;
 	if (nargs != 4) {
 		return EINVAL;
 	}
-	for (word = strtok_r(cmd, " ", &context);
-		word != NULL;
-		word = strtok_r(NULL, " ", &context)) {
-		cmd[i++] = word;
-	}
-	printf("\nmade it here\n");
-
-	for (i=0;i<nargs;i++) {
-		printf("\n%s", args[i]);
-	}
-
-	//jobBuffer[buf_head].name = args[0];	
-	//jobBuffer[buf_head].arg1 = args[1];	
-	//jobBuffer[buf_head].arg2 = args[2];	
-	//jobBuffer[buf_head].priority = args[3];	
-	//jobBuffer[buf_head].burst= args[4];
-	//test stuff
-	printf("\n%d",jobBuffer[buf_head].name);
-	printf("\n%d",jobBuffer[buf_head].arg1);
-	printf("\n%d",jobBuffer[buf_head].arg2);
-	printf("\n%d",jobBuffer[buf_head].priority);
-	printf("\n%d",jobBuffer[buf_head].burst);
-
-
+	sscanf(args[1], "%s", &jobBuffer[buf_head].name);
+	sscanf(args[2], "%u", &jobBuffer[buf_head].priority);
+	sscanf(args[3], "%u", &jobBuffer[buf_head].burst);
+	printf("%s", jobBuffer[buf_head].name);
 	// end test stuff
 	count = count + 1;
 	buf_head = buf_head + 1;
@@ -261,16 +238,17 @@ void *executor() {
 		pthread_cond_wait(&cmd_buf_not_empty, &cmd_queue_lock);
 	}
 	count--;
-	
+	sprintf(arg1,"%s",jobBuffer[buf_tail].name);
+	sprintf(arg2,"%u",jobBuffer[buf_tail].burst);
 	//system(jobBuffer[buf_tail]); //change later to execv
 	//free(jobBuffer[buf_tail]); // change this too
+	
 	pid_t run = fork();
-
+	
 	if(run == 0) {
 		execv("./process",(char*[]){"./process",arg1,arg2,NULL});
 	}
-
-	printf("its happening!");	
+	wait();
 	buf_tail++;
 	if (buf_tail == BUFF_SIZE) {
 		buf_tail = 0;
