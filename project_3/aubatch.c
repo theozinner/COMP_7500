@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <assert.h>
+#include <time.h>
 
 #define BUFF_SIZE 15
 #define NUM_OF_CMD 999999999
@@ -24,6 +25,7 @@ pthread_cond_t cmd_buf_not_empty;
 u_int buf_head;
 u_int buf_tail;
 u_int count;
+u_int policy = 0;
 
 
 void *commandLine();
@@ -36,11 +38,13 @@ int cmd_quit(int nargs, char **args);
 void showmenu(const char *name, const char *x[]);
 int cmd_helpmenu(int n, char **a);
 int cmd_dispatch(char *cmd);
+int cmd_list(int nargs, char**args);
 
 //job properties
 struct job_def {
 	char name[50];
-	int arg1, arg2, priority, burst, position;
+	int priority, burst, position;
+	time_t arrival;
 };
 
 //job buffer
@@ -51,14 +55,14 @@ struct job_def jobBuffer[BUFF_SIZE - 1];
  *   */
 int cmd_run(int nargs, char **args) { 
 	int i = 0;
+	time_t rtime = time(NULL);
 	if (nargs != 4) {
 		return EINVAL;
 	}
 	sscanf(args[1], "%s", &jobBuffer[buf_head].name);
 	sscanf(args[2], "%u", &jobBuffer[buf_head].priority);
 	sscanf(args[3], "%u", &jobBuffer[buf_head].burst);
-	printf("%s", jobBuffer[buf_head].name);
-	// end test stuff
+	jobBuffer[buf_head].arrival = rtime;
 	count = count + 1;
 	buf_head = buf_head + 1;
 	jobBuffer[buf_head].position = buf_head;
@@ -73,6 +77,55 @@ int cmd_quit(int nargs, char **args) {
 	printf("Please display performance information before exiting AUbatch!\n");
         exit(0);
 }
+/*
+ *  * The list command.
+ *  */
+int cmd_list(int nargs, char **args) {
+	printf("\nTotal Number of jobs in the queue: ");
+	printf("%u\n", count);
+	printf("Scheduling Policy: ");
+	if (policy == 0) {
+		printf("FCFS.\n");
+	}
+	else if(policy == 1) {
+		printf("SJF.\n");
+	}
+	else if(policy == 2) {
+		printf("Priority.\n");
+	}
+	printf("Name	CPU_Time	Priority	Arrival_time	Progress\n");
+	int i = buf_tail - 1;
+	int j;
+	struct tm *ptm;
+	time_t time;
+	int run = 1;
+	int jobs = count + 1;
+	for (j = 0; j < jobs; j++) {
+		if (i == BUFF_SIZE) {
+			i = 0;
+		}
+
+		//printf("\nstart loop\n");
+		printf("%s\t",jobBuffer[i].name);
+		printf("%u\t\t",jobBuffer[i].burst);
+		printf("%u\t\t",jobBuffer[i].priority);
+		//printf("\n%lu\n", jobBuffer[i].arrival);
+		//sprintf(time, "%lu", jobBuffer[i].arrival);
+		time = jobBuffer[i].arrival;
+		//printf("%lu", jobBuffer[i].arrival);
+		ptm = localtime( &time );
+		printf("%02d:%02d:%02d\t", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
+		if (run) {
+			printf("RUN");
+			run = 0;
+		}
+		printf("\n");
+		i++;
+	}
+	printf("\nmade it here\n");
+	return 0;
+}
+
 
 /*
  *  * Display menu information
@@ -157,11 +210,13 @@ static struct {
 	        { "?\n",        cmd_helpmenu },
 		{ "h\n",        cmd_helpmenu },
 		{ "help\n",     cmd_helpmenu },
-		{ "r",          cmd_run } ,
+		{ "r",          cmd_run },
 	       	{ "run",        cmd_run },
 		{ "q\n",        cmd_quit },
 		{ "quit\n",     cmd_quit },
 		/* Please add more operations below. */
+		{ "l\n",	cmd_list },
+		{ "list\n",	cmd_list },
 		{NULL, NULL}
 };
 
@@ -189,9 +244,6 @@ int dispatch(char *cmd) {
 		if(*cmdtable[i].name && !strcmp(args[0], cmdtable[i].name)) {
 			assert(cmdtable[i].func != NULL);
 			//call function here maybe?i
-			for (i=0;i<nargs;i++) {
-				printf("\n%s", args[i]);
-			}
 			result = cmdtable[i].func(nargs, args);
 			return result;
 		}
@@ -221,7 +273,6 @@ void *commandLine() {
 		//prompt for input
 		printf("\n>");
 		getline(&input, &command_size, stdin);
-		printf("%s", input);
 		dispatch(input);
 	}
 
@@ -248,12 +299,12 @@ void *executor() {
 	if(run == 0) {
 		execv("./process",(char*[]){"./process",arg1,arg2,NULL});
 	}
-	wait();
 	buf_tail++;
 	if (buf_tail == BUFF_SIZE) {
 		buf_tail = 0;
 	}
 	pthread_cond_signal(&cmd_buf_not_full);
 	pthread_mutex_unlock(&cmd_queue_lock);
+	wait();
 	} //end for loop
 }
