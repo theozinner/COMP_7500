@@ -18,7 +18,7 @@ pthread_cond_t cmd_buf_not_empty;
 #define EINVAL 1
 #define E2BIG 2
 
-#define MAXMENUARGS 4
+#define MAXMENUARGS 7
 #define MAXCMDLINE 64
 
 //globals
@@ -42,6 +42,7 @@ int cmd_list(int nargs, char **args);
 int cmd_fcfs(int nargs, char **args);
 int cmd_sjf(int nargs, char **args);
 int cmd_priority(int nargs, char **args);
+int cmd_test(int nargs, char **args);
 
 //job properties
 struct job_def {
@@ -53,6 +54,33 @@ struct job_def {
 //job buffer
 struct job_def jobBuffer[BUFF_SIZE - 1];
 
+
+
+//cmd table
+static struct {
+	        const char *name;
+		int (*func)(int nargs, char **args);
+} cmdtable[] = {
+	        /* commands: single command must end with \n */
+	        { "?\n",        cmd_helpmenu },
+		{ "h\n",        cmd_helpmenu },
+		{ "help\n",     cmd_helpmenu },
+		{ "r",          cmd_run },
+	       	{ "run",        cmd_run },
+		{ "q\n",        cmd_quit },
+		{ "quit\n",     cmd_quit },
+		/* Please add more operations below. */
+		{ "l\n",	cmd_list },
+		{ "list\n",	cmd_list },
+		{ "sjf\n",	cmd_sjf },
+		{ "fcfs\n",	cmd_fcfs },
+		{ "priority\n",	cmd_priority },
+		{ "test",	cmd_test },
+		{NULL, NULL}
+};
+
+
+
 /*
  *  * The run command - submit a job.
  *   */
@@ -60,8 +88,10 @@ int cmd_run(int nargs, char **args) {
 	int i = 0;
 	time_t rtime = time(NULL);
 	if (nargs != 4) {
+		printf("wrong number of args");
 		return EINVAL;
 	}
+	printf("made it here");
 	sscanf(args[1], "%s", &jobBuffer[buf_head].name);
 	sscanf(args[3], "%u", &jobBuffer[buf_head].priority);
 	sscanf(args[2], "%u", &jobBuffer[buf_head].burst);
@@ -72,6 +102,64 @@ int cmd_run(int nargs, char **args) {
 	pthread_cond_signal(&cmd_buf_not_empty);
 	return 0; /* if succeed */
 }
+
+int cmd_test(int nargs, char **args) {
+	if (nargs != 7)
+	{
+		printf("\nWrong number of arguments\n");
+		return EINVAL;
+	}
+	if (strcmp(args[2], "fcfs") == 0) {
+		cmd_fcfs(NULL, NULL);
+	}
+	else if (strcmp(args[2], "sjf") == 0) {
+		cmd_sjf(NULL, NULL);
+	}
+	else if(strcmp(args[2], "priority") == 0) {
+		cmd_priority(NULL, NULL);
+	}
+	else {
+		printf("\nPlease select a scheduling algorithm\n");
+		return EINVAL;
+	}
+	int jobs;
+	int priorityMax;
+	int minTime;
+	int maxTime;
+	sscanf(args[3], "%u", &jobs);
+	sscanf(args[4], "%u", &priorityMax);
+	sscanf(args[5], "%u", &minTime);
+	sscanf(args[6], "%u", &maxTime);
+	int i;
+	for (i = 0; i < jobs; i++) {
+		char arg1[50], arg2[50], arg3[50], arg4[50];
+		char **newArgs[10];
+		int nargs = 4;
+		int priority = (rand() % priorityMax + 1);
+		int cpuTime = (rand() % (maxTime - minTime + 1) + minTime);
+		printf("One\n");
+		sprintf(arg1,"%s", "run");
+		sprintf(arg2, "%s", "testProcess");
+		printf("two\n");
+		sprintf(arg3, "%u", cpuTime);
+		sprintf(arg4, "%u", priority);
+		newArgs[0] = arg1;
+		newArgs[1] = arg2;
+		newArgs[2] = arg3;
+		newArgs[3] = arg4;
+		printf("\n%s\n", newArgs[0]);
+		printf("\n%s\n", newArgs[1]);
+		printf("\n%u\n", newArgs[2]);
+		printf("\n%u\n", newArgs[3]);
+		cmd_run(nargs, newArgs);
+		//call something that prints this out
+	}
+
+
+	return 0;
+}
+
+
 int cmd_fcfs(int nargs, char **args) {
 	if (policy == 0) {
 		return 0;
@@ -249,8 +337,6 @@ int cmd_list(int nargs, char **args) {
 		if (i == BUFF_SIZE) {
 			i = 0;
 		}
-
-		//printf("\nstart loop\n");
 		printf("%s\t",jobBuffer[i].name);
 		printf("%u\t\t",jobBuffer[i].burst);
 		printf("%u\t\t",jobBuffer[i].priority);
@@ -340,30 +426,6 @@ int main() {
 	//exit
 	exit(0);
 }
-
-
-//cmd table
-static struct {
-	        const char *name;
-		int (*func)(int nargs, char **args);
-} cmdtable[] = {
-	        /* commands: single command must end with \n */
-	        { "?\n",        cmd_helpmenu },
-		{ "h\n",        cmd_helpmenu },
-		{ "help\n",     cmd_helpmenu },
-		{ "r",          cmd_run },
-	       	{ "run",        cmd_run },
-		{ "q\n",        cmd_quit },
-		{ "quit\n",     cmd_quit },
-		/* Please add more operations below. */
-		{ "l\n",	cmd_list },
-		{ "list\n",	cmd_list },
-		{ "sjf\n",	cmd_sjf },
-		{ "fcfs\n",	cmd_fcfs },
-		{ "priority\n",	cmd_priority },
-		{NULL, NULL}
-};
-
 int dispatch(char *cmd) {
 	time_t beforesecs, afersecs, secs;
 	u_int32_t berforensec, afternsecs, nsecs;
@@ -387,7 +449,6 @@ int dispatch(char *cmd) {
 	for(i = 0; cmdtable[i].name; i++) {
 		if(*cmdtable[i].name && !strcmp(args[0], cmdtable[i].name)) {
 			assert(cmdtable[i].func != NULL);
-			//call function here maybe?i
 			result = cmdtable[i].func(nargs, args);
 			return result;
 		}
@@ -405,7 +466,6 @@ void *commandLine() {
 	char num_str[8];
 	size_t command_size[64];
 	char *input;
-	char inputA[100];
 
 	for (i = 0; i < NUM_OF_CMD; i++) {
 		pthread_mutex_lock(&cmd_queue_lock);
@@ -434,10 +494,7 @@ void *executor() {
 	}
 	count--;
 	sprintf(arg1,"%s",jobBuffer[buf_tail].name);
-	sprintf(arg2,"%u",jobBuffer[buf_tail].burst);
-	//system(jobBuffer[buf_tail]); //change later to execv
-	//free(jobBuffer[buf_tail]); // change this too
-	
+	sprintf(arg2,"%u",jobBuffer[buf_tail].burst);	
 	pid_t run = fork();
 	
 	if(run == 0) {
