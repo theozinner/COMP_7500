@@ -38,7 +38,10 @@ int cmd_quit(int nargs, char **args);
 void showmenu(const char *name, const char *x[]);
 int cmd_helpmenu(int n, char **a);
 int cmd_dispatch(char *cmd);
-int cmd_list(int nargs, char**args);
+int cmd_list(int nargs, char **args);
+int cmd_fcfs(int nargs, char **args);
+int cmd_sjf(int nargs, char **args);
+int cmd_priority(int nargs, char **args);
 
 //job properties
 struct job_def {
@@ -69,6 +72,141 @@ int cmd_run(int nargs, char **args) {
 	pthread_cond_signal(&cmd_buf_not_empty);
 	return 0; /* if succeed */
 }
+int cmd_fcfs(int nargs, char **args) {
+	policy = 0;
+	struct job_def tempJob;
+	int j;
+	int minJ;
+	int i;
+	int k = buf_head;
+	int l;
+	for (l = 0; l < count; l++) {
+		if (k == BUFF_SIZE) {
+			k = 0;
+		}
+		j = k;
+		long int minArrival = jobBuffer[j].arrival;
+		for (i = l; i < count; i++) {
+			long int temp = jobBuffer[j].arrival;
+			if (temp < minArrival) {
+				minArrival = temp;
+				minJ = j;
+			}
+			j++;
+		}
+		if (minJ != k) {
+			strcpy(tempJob.name, jobBuffer[k].name);
+			tempJob.burst = jobBuffer[k].burst;
+			tempJob.priority = jobBuffer[k].priority;
+			tempJob.arrival = jobBuffer[k].arrival;
+		
+			strcpy(jobBuffer[k].name, jobBuffer[minJ].name);
+			jobBuffer[k].burst = jobBuffer[minJ].burst;
+			jobBuffer[k].priority = jobBuffer[minJ].priority;
+			jobBuffer[k].arrival = jobBuffer[minJ].arrival;
+
+			strcpy(jobBuffer[minJ].name, tempJob.name);
+			jobBuffer[minJ].burst = tempJob.burst;
+			jobBuffer[minJ].priority = tempJob.priority;
+			jobBuffer[minJ].arrival = tempJob.arrival;
+		}
+
+		k++;
+	}
+	return 0;
+}
+int cmd_sjf(int nargs, char **args) {
+	policy = 1;
+	struct job_def tempJob;
+	int j;
+	int minJ;
+	int i;
+	int k = buf_head;
+	int l;
+	for (l = 0; l < count; l++) {
+		if (k == BUFF_SIZE) {
+			k = 0;
+		}
+		j = k;
+		int minBurst = jobBuffer[j].burst;
+		for (i = l; i < count; i++) {
+			int temp = jobBuffer[j].burst;
+			if (temp < minBurst) {
+				minBurst = temp;
+				minJ = j;
+			}
+			j++;
+		}
+		if (minJ != k) {
+			printf("made it here");
+			strcpy(tempJob.name, jobBuffer[k].name);
+			tempJob.burst = jobBuffer[k].burst;
+			tempJob.priority = jobBuffer[k].priority;
+			tempJob.arrival = jobBuffer[k].arrival;
+		
+			strcpy(jobBuffer[k].name, jobBuffer[minJ].name);
+			jobBuffer[k].burst = jobBuffer[minJ].burst;
+			jobBuffer[k].priority = jobBuffer[minJ].priority;
+			jobBuffer[k].arrival = jobBuffer[minJ].arrival;
+
+			strcpy(jobBuffer[minJ].name, tempJob.name);
+			jobBuffer[minJ].burst = tempJob.burst;
+			jobBuffer[minJ].priority = tempJob.priority;
+			jobBuffer[minJ].arrival = tempJob.arrival;
+		}
+
+		k++;
+	}
+	return 0;
+}
+
+int cmd_priority(int nargs, char **args) {
+	policy = 2;
+	struct job_def tempJob;
+	int j;
+	int minJ;
+	int i;
+	int k = buf_tail;
+	int l;
+	for (l = 0; l < count; l++) {
+		if (k == BUFF_SIZE) {
+			k = 0;
+		}
+		printf("\nOne\n");
+		j = k;
+		int limit = count - l;
+		int minPriority = jobBuffer[j].priority;
+		for (i = l; i < limit; i++) {
+			printf("\nTwo\n");
+			int temp = jobBuffer[j].priority;
+			if (temp < minPriority) {
+				printf("\nThree\n");
+				minPriority = temp;
+				minJ = j;
+			}
+			j++;
+		}
+		if (minJ != k) {
+			strcpy(tempJob.name, jobBuffer[k].name);
+			tempJob.burst = jobBuffer[k].burst;
+			tempJob.priority = jobBuffer[k].priority;
+			tempJob.arrival = jobBuffer[k].arrival;
+		
+			strcpy(jobBuffer[k].name, jobBuffer[minJ].name);
+			jobBuffer[k].burst = jobBuffer[minJ].burst;
+			jobBuffer[k].priority = jobBuffer[minJ].priority;
+			jobBuffer[k].arrival = jobBuffer[minJ].arrival;
+
+			strcpy(jobBuffer[minJ].name, tempJob.name);
+			jobBuffer[minJ].burst = tempJob.burst;
+			jobBuffer[minJ].priority = tempJob.priority;
+			jobBuffer[minJ].arrival = tempJob.arrival;
+		}
+		k++;
+	}
+	return 0;
+}
+
 
 /*
  *  * The quit command.
@@ -109,10 +247,7 @@ int cmd_list(int nargs, char **args) {
 		printf("%s\t",jobBuffer[i].name);
 		printf("%u\t\t",jobBuffer[i].burst);
 		printf("%u\t\t",jobBuffer[i].priority);
-		//printf("\n%lu\n", jobBuffer[i].arrival);
-		//sprintf(time, "%lu", jobBuffer[i].arrival);
 		time = jobBuffer[i].arrival;
-		//printf("%lu", jobBuffer[i].arrival);
 		ptm = localtime( &time );
 		printf("%02d:%02d:%02d\t", ptm->tm_hour, ptm->tm_min, ptm->tm_sec);
 		if (run) {
@@ -122,7 +257,6 @@ int cmd_list(int nargs, char **args) {
 		printf("\n");
 		i++;
 	}
-	printf("\nmade it here\n");
 	return 0;
 }
 
@@ -217,6 +351,9 @@ static struct {
 		/* Please add more operations below. */
 		{ "l\n",	cmd_list },
 		{ "list\n",	cmd_list },
+		{ "sjf\n",	cmd_sjf },
+		{ "fcfs\n",	cmd_fcfs },
+		{ "priority\n",	cmd_priority },
 		{NULL, NULL}
 };
 
