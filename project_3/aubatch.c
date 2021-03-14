@@ -63,8 +63,8 @@ int cmd_run(int nargs, char **args) {
 		return EINVAL;
 	}
 	sscanf(args[1], "%s", &jobBuffer[buf_head].name);
-	sscanf(args[2], "%u", &jobBuffer[buf_head].priority);
-	sscanf(args[3], "%u", &jobBuffer[buf_head].burst);
+	sscanf(args[3], "%u", &jobBuffer[buf_head].priority);
+	sscanf(args[2], "%u", &jobBuffer[buf_head].burst);
 	jobBuffer[buf_head].arrival = rtime;
 	count = count + 1;
 	buf_head = buf_head + 1;
@@ -73,20 +73,24 @@ int cmd_run(int nargs, char **args) {
 	return 0; /* if succeed */
 }
 int cmd_fcfs(int nargs, char **args) {
+	if (policy == 0) {
+		return 0;
+	}
 	policy = 0;
 	struct job_def tempJob;
 	int j;
 	int minJ;
 	int i;
-	int k = buf_head;
+	int k = buf_tail;
 	int l;
 	for (l = 0; l < count; l++) {
 		if (k == BUFF_SIZE) {
 			k = 0;
 		}
 		j = k;
+		int limit = count - l;
 		long int minArrival = jobBuffer[j].arrival;
-		for (i = l; i < count; i++) {
+		for (i = l; i < limit; i++) {
 			long int temp = jobBuffer[j].arrival;
 			if (temp < minArrival) {
 				minArrival = temp;
@@ -116,20 +120,24 @@ int cmd_fcfs(int nargs, char **args) {
 	return 0;
 }
 int cmd_sjf(int nargs, char **args) {
+	if (policy == 1) {
+		return 0;
+	}
 	policy = 1;
 	struct job_def tempJob;
 	int j;
 	int minJ;
 	int i;
-	int k = buf_head;
+	int k = buf_tail;
 	int l;
 	for (l = 0; l < count; l++) {
 		if (k == BUFF_SIZE) {
 			k = 0;
 		}
 		j = k;
+		int limit = count - l;
 		int minBurst = jobBuffer[j].burst;
-		for (i = l; i < count; i++) {
+		for (i = l; i < limit; i++) {
 			int temp = jobBuffer[j].burst;
 			if (temp < minBurst) {
 				minBurst = temp;
@@ -138,7 +146,6 @@ int cmd_sjf(int nargs, char **args) {
 			j++;
 		}
 		if (minJ != k) {
-			printf("made it here");
 			strcpy(tempJob.name, jobBuffer[k].name);
 			tempJob.burst = jobBuffer[k].burst;
 			tempJob.priority = jobBuffer[k].priority;
@@ -161,6 +168,9 @@ int cmd_sjf(int nargs, char **args) {
 }
 
 int cmd_priority(int nargs, char **args) {
+	if (policy == 2) {
+		return 0;
+	}
 	policy = 2;
 	struct job_def tempJob;
 	int j;
@@ -172,15 +182,12 @@ int cmd_priority(int nargs, char **args) {
 		if (k == BUFF_SIZE) {
 			k = 0;
 		}
-		printf("\nOne\n");
 		j = k;
 		int limit = count - l;
 		int minPriority = jobBuffer[j].priority;
 		for (i = l; i < limit; i++) {
-			printf("\nTwo\n");
 			int temp = jobBuffer[j].priority;
 			if (temp < minPriority) {
-				printf("\nThree\n");
 				minPriority = temp;
 				minJ = j;
 			}
