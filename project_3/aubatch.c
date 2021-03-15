@@ -109,19 +109,6 @@ int cmd_test(int nargs, char **args) {
 		printf("\nWrong number of arguments\n");
 		return EINVAL;
 	}
-	if (strcmp(args[2], "fcfs") == 0) {
-		cmd_fcfs(NULL, NULL);
-	}
-	else if (strcmp(args[2], "sjf") == 0) {
-		cmd_sjf(NULL, NULL);
-	}
-	else if(strcmp(args[2], "priority") == 0) {
-		cmd_priority(NULL, NULL);
-	}
-	else {
-		printf("\nPlease select a scheduling algorithm\n");
-		return EINVAL;
-	}
 	int jobs;
 	int priorityMax;
 	int minTime;
@@ -154,6 +141,18 @@ int cmd_test(int nargs, char **args) {
 		cmd_run(nargs, newArgs);
 		//call something that prints this out
 	}
+	if (strcmp(args[2], "fcfs") == 0) {
+		cmd_fcfs(NULL, NULL);
+	}
+	else if (strcmp(args[2], "sjf") == 0) {
+		cmd_sjf(NULL, NULL);
+	}
+	else if(strcmp(args[2], "priority") == 0) {
+		cmd_priority(NULL, NULL);
+	}
+	else {
+		return EINVAL;
+	}
 
 
 	return 0;
@@ -176,6 +175,7 @@ int cmd_fcfs(int nargs, char **args) {
 			k = 0;
 		}
 		j = k;
+		minJ = k;
 		int limit = count - l;
 		long int minArrival = jobBuffer[j].arrival;
 		for (i = l; i < limit; i++) {
@@ -223,6 +223,7 @@ int cmd_sjf(int nargs, char **args) {
 			k = 0;
 		}
 		j = k;
+		minJ = k;
 		int limit = count - l;
 		int minBurst = jobBuffer[j].burst;
 		for (i = l; i < limit; i++) {
@@ -271,6 +272,7 @@ int cmd_priority(int nargs, char **args) {
 			k = 0;
 		}
 		j = k;
+		minJ = k;
 		int limit = count - l;
 		int minPriority = jobBuffer[j].priority;
 		for (i = l; i < limit; i++) {
