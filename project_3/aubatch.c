@@ -1,3 +1,16 @@
+/*
+ *	AUbatch.c
+ *	Theo Zinner, tvz0001, 90502834
+ *	COMP7500 Dr. Qin
+ *
+ *	I started with Dr. Qin's code from canvas and I used the following website to look up c syntax:
+ *	geeksforgeek.org, cpluscplus.com, and tutorialspoint.com
+ *
+ *
+ *
+ */
+
+
 #include <stdio.h>
 #include <pthread.h>
 #include <stdlib.h>
@@ -27,7 +40,6 @@ u_int buf_tail;
 u_int count;
 u_int total = 0;
 u_int policy = 0;
-
 u_int totalT = 0;
 float turnAroundTime;
 float cpuTime;
@@ -43,10 +55,10 @@ u_int twoProcess = 1;
 //time of queue
 u_int expectedWaitingTime = 0;
 
+//initialization
 void *commandLine();
 void *executor();
 int dispatch(char *cmd);
-
 void menu_execute(char *line, int isargs);
 int cmd_run(int nargs, char **args);
 int cmd_quit(int nargs, char **args);
@@ -143,6 +155,9 @@ int cmd_run(int nargs, char **args) {
 	return 0; /* if succeed */
 }
 
+/*
+ *  * The test command - tests multiple jobs and returns stats.
+ *   */
 int cmd_test(int nargs, char **args) {
 	if (nargs != 7)
 	{
@@ -220,6 +235,9 @@ int cmd_test(int nargs, char **args) {
 	return 0;
 }
 
+/*
+ *  * The fcfs command - changes scheduling policy.
+ *   */
 
 int cmd_fcfs(int nargs, char **args) {
 	if (policy == 0) {
@@ -273,6 +291,10 @@ int cmd_fcfs(int nargs, char **args) {
 
 	return 0;
 }
+
+/*
+ *  * The sjf command - changes scheduling policy.
+ *   */
 int cmd_sjf(int nargs, char **args) {
 	if (policy == 1) {
 		return 0;
@@ -326,6 +348,9 @@ int cmd_sjf(int nargs, char **args) {
 	return 0;
 }
 
+/*
+ *  * The priority command - changes scheduling policy.
+ *   */
 int cmd_priority(int nargs, char **args) {
 	if (policy == 2) {
 		return 0;
@@ -384,7 +409,7 @@ int cmd_priority(int nargs, char **args) {
 int cmd_quit(int nargs, char **args) {
 	float totalRuns = total - count;
 	if(totalRuns < 1) {
-		printf("Cannot show statistics as not enough processes have finished");
+		printf("Cannot show statistics as not enough processes have finished\n");
 		exit(0);
 	}
 	printf("Total number of jobs submitted: %u\n", total);
@@ -442,6 +467,9 @@ int cmd_list(int nargs, char **args) {
 }
 
 
+/*
+ *  * The help command - shows help functions.
+ *   */
 int cmd_helpmenu(int n, char **a)
 {
         (void)n;
@@ -461,8 +489,9 @@ int cmd_helpmenu(int n, char **a)
         return 0;
 }
 
-//char *cmd_buffer[BUFF_SIZE];
-
+/*
+ *  * The main method - you know what it is.
+ *   */
 int main() {
 	//initialize var
 	count = 0;
@@ -495,6 +524,11 @@ int main() {
 	//exit
 	exit(0);
 }
+
+
+/*
+ *  * The dispatch - this takes input from the command line and send it to the proper command.
+ *   */
 int dispatch(char *cmd) {
 	time_t beforesecs, afersecs, secs;
 	u_int32_t berforensec, afternsecs, nsecs;
@@ -527,6 +561,9 @@ int dispatch(char *cmd) {
 }
 
 
+/*
+ *  * The command line- takes input from the user.
+ *   */
 
 
 void *commandLine() {
@@ -550,6 +587,9 @@ void *commandLine() {
 
 }
 
+/*
+ *  * The executon - this runs the jobs in the queue.
+ *   */
 void *executor() {
 	u_int i;
 
