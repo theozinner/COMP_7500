@@ -21,9 +21,9 @@ int main(int argc, char *argv[] )
 {
   int waiting;
   sscanf(argv[2], "%u", &waiting);
-  printf("\n%u", waiting);
+ // printf("\n%u", waiting);
   sleep(waiting);
-  printf("\n%s", argv[1]);
-  printf(" finished\n");
+//  printf("\n%s", argv[1]);
+//  printf(" finished\n");
   return 0;
 }

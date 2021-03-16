@@ -211,9 +211,9 @@ int cmd_test(int nargs, char **args) {
 	float wait = waitingTimeT / totalRuns;
 	float throughput = 1 / cpu;
 	printf("Average turnaround time:	%.2f seconds\n", turnAround);
-	printf("Average CPU time:	%.2f seconds\n", cpu);
-	printf("Average waiting time:	%.2f seconds\n", wait);
-	printf("Throughput	%.2f No./second\n", throughput);
+	printf("Average CPU time:		%.2f seconds\n", cpu);
+	printf("Average waiting time:		%.2f seconds\n", wait);
+	printf("Throughput			%.2f No./second\n", throughput);
 
 
 
@@ -393,9 +393,9 @@ int cmd_quit(int nargs, char **args) {
 	float wait = waitingTime / totalRuns;
 	float throughput = 1 / cpu;
 	printf("Average turnaround time:	%.2f seconds\n", turnAround);
-	printf("Average CPU time:	%.2f seconds\n", cpu);
-	printf("Average waiting time:	%.2f seconds\n", wait);
-	printf("Throughput	%.2f No./second\n", throughput);
+	printf("Average CPU time:		%.2f seconds\n", cpu);
+	printf("Average waiting time:		%.2f seconds\n", wait);
+	printf("Throughput			%.2f No./second\n", throughput);
         exit(0);
 }
 /*
@@ -442,49 +442,10 @@ int cmd_list(int nargs, char **args) {
 }
 
 
-/*
- *  * Display menu information
- *   */
-void showmenu(const char *name, const char *x[])
-{
-	int ct, half, i;
-        printf("\n");
-        printf("%s\n", name);
-        for (i=ct=0; x[i]; i++) {
-                ct++;
-	}
-	half = (ct+1)/2;
-        for (i=0; i<half; i++) {
-                printf("    %-36s", x[i]);
-                if (i+half < ct) {
-                        printf("%s", x[i+half]);
-                }
-		printf("\n");														       
-       	}
-        printf("\n");
-}
-
-static const char *helpmenu[] = {
-        "run <job> <time> <priority>: submit a job named <job>,    ",
-	"				 execution time is <time>, ",
-	"				 priority is <priority>.   ",
-	"list: display the job status.				   ",
-	"fcfs: change the scheduling policy to FCFS.		   ",
-	"sjf: change the scheduling policy to SJF.		   ",
-	"priority: change the scheduling policy to priority.	   ",
-	"test: <benchmark> <policy> <num_of_jobs> <priority_levels>",
-	"<min_CPU_time> <max_CPU_time>				   ",
-	"quit: exit AUbatch                 			   ",
-        "help: print this menu              			   ",
-        /* Please add more menu options below */
-        NULL
-};
-
 int cmd_helpmenu(int n, char **a)
 {
         (void)n;
         (void)a;
-        //showmenu("AUbatch help menu", helpmenu);
 	char *help;
 	printf("run <job> <time> <priority>: submit a job named <job>,  	\n");
 	printf("			     execution time is <time>,  	\n");
@@ -582,7 +543,6 @@ void *commandLine() {
 			pthread_cond_wait(&cmd_buf_not_full, &cmd_queue_lock);
 		}
 		pthread_mutex_unlock(&cmd_queue_lock);
-		//prompt for input
 		printf("\n>");
 		getline(&input, &command_size, stdin);
 		dispatch(input);
