@@ -25,8 +25,23 @@ pthread_cond_t cmd_buf_not_empty;
 u_int buf_head;
 u_int buf_tail;
 u_int count;
+u_int total = 0;
 u_int policy = 0;
 
+u_int totalT = 0;
+float turnAroundTime;
+float cpuTime;
+float waitingTime;
+float turnAroundTimeT;
+float cpuTimeT;
+float waitingTimeT;
+//flags
+u_int run = 1;
+u_int sched = 1;
+u_int oneProcess = 0;
+u_int twoProcess = 1;
+//time of queue
+u_int expectedWaitingTime = 0;
 
 void *commandLine();
 void *executor();
@@ -84,22 +99,47 @@ static struct {
 /*
  *  * The run command - submit a job.
  *   */
-int cmd_run(int nargs, char **args) { 
+int cmd_run(int nargs, char **args) {
 	int i = 0;
 	time_t rtime = time(NULL);
 	if (nargs != 4) {
 		printf("wrong number of args");
 		return EINVAL;
 	}
-	printf("made it here");
+	char *name[50];
 	sscanf(args[1], "%s", &jobBuffer[buf_head].name);
+	sprintf(name, "%s", jobBuffer[buf_head].name);
 	sscanf(args[3], "%u", &jobBuffer[buf_head].priority);
 	sscanf(args[2], "%u", &jobBuffer[buf_head].burst);
+	int burst = jobBuffer[buf_head].burst;
+	expectedWaitingTime = expectedWaitingTime + burst;
 	jobBuffer[buf_head].arrival = rtime;
 	count = count + 1;
 	buf_head = buf_head + 1;
 	jobBuffer[buf_head].position = buf_head;
 	pthread_cond_signal(&cmd_buf_not_empty);
+	char *policySet;
+	if (policy == 0) {
+		cmd_fcfs(NULL, NULL);
+		policySet = "FCFS.";
+	}
+	else if (policy == 1) {
+		cmd_sjf(NULL, NULL);
+		policySet = "SJF.";
+	}
+	else if (policy == 2) {
+		cmd_priority(NULL, NULL);
+		policySet = "Priority.";
+	}
+	if (run) {
+		printf("Job %s", name);
+		printf(" was submitted.\n");
+		printf("Total number of jobs in the queue: %u\n", count);
+		printf("Expected waiting time: %u seconds\n", expectedWaitingTime);
+		printf("Scheduling Policy: %s\n", policySet);
+	}
+	total++;
+	totalT = total;
 	return 0; /* if succeed */
 }
 
@@ -109,6 +149,10 @@ int cmd_test(int nargs, char **args) {
 		printf("\nWrong number of arguments\n");
 		return EINVAL;
 	}
+	totalT = 0;
+	waitingTimeT = 0;
+	turnAroundTimeT = 0;
+	cpuTimeT = 0;
 	int jobs;
 	int priorityMax;
 	int minTime;
@@ -118,29 +162,32 @@ int cmd_test(int nargs, char **args) {
 	sscanf(args[5], "%u", &minTime);
 	sscanf(args[6], "%u", &maxTime);
 	int i;
+	if (count != 0) {
+		printf("\nWaiting for other jobs to finish...\n");
+		while((count != 0) || twoProcess) {
+			//do nothing
+		}
+	}
 	for (i = 0; i < jobs; i++) {
 		char arg1[50], arg2[50], arg3[50], arg4[50];
 		char **newArgs[10];
 		int nargs = 4;
 		int priority = (rand() % priorityMax + 1);
 		int cpuTime = (rand() % (maxTime - minTime + 1) + minTime);
-		printf("One\n");
 		sprintf(arg1,"%s", "run");
 		sprintf(arg2, "%s", "testProcess");
-		printf("two\n");
 		sprintf(arg3, "%u", cpuTime);
 		sprintf(arg4, "%u", priority);
 		newArgs[0] = arg1;
 		newArgs[1] = arg2;
 		newArgs[2] = arg3;
 		newArgs[3] = arg4;
-		printf("\n%s\n", newArgs[0]);
-		printf("\n%s\n", newArgs[1]);
-		printf("\n%u\n", newArgs[2]);
-		printf("\n%u\n", newArgs[3]);
+		run = 0;
 		cmd_run(nargs, newArgs);
+		run = 1;
 		//call something that prints this out
 	}
+	sched = 0;
 	if (strcmp(args[2], "fcfs") == 0) {
 		cmd_fcfs(NULL, NULL);
 	}
@@ -153,6 +200,21 @@ int cmd_test(int nargs, char **args) {
 	else {
 		return EINVAL;
 	}
+	sched = 1;
+	while((count != 0) || twoProcess) {
+		//do nothing
+	}
+	float totalRuns = totalT;
+	printf("Total number of jobs submitted: %u\n", totalT);
+	float turnAround = turnAroundTimeT / totalRuns;
+	float cpu = cpuTimeT / totalRuns;
+	float wait = waitingTimeT / totalRuns;
+	float throughput = 1 / cpu;
+	printf("Average turnaround time:	%.2f seconds\n", turnAround);
+	printf("Average CPU time:	%.2f seconds\n", cpu);
+	printf("Average waiting time:	%.2f seconds\n", wait);
+	printf("Throughput	%.2f No./second\n", throughput);
+
 
 
 	return 0;
@@ -205,6 +267,10 @@ int cmd_fcfs(int nargs, char **args) {
 
 		k++;
 	}
+	if (sched) {
+		printf("Scheduling policy is switched to FCFS. All the %u waiting jobs\nhave been rescheduled.", count);
+	}
+
 	return 0;
 }
 int cmd_sjf(int nargs, char **args) {
@@ -253,6 +319,10 @@ int cmd_sjf(int nargs, char **args) {
 
 		k++;
 	}
+	if (sched) {
+		printf("Scheduling policy is switched to SJF. All the %u waiting jobs\nhave been rescheduled.", count);
+	}
+
 	return 0;
 }
 
@@ -301,6 +371,9 @@ int cmd_priority(int nargs, char **args) {
 		}
 		k++;
 	}
+	if (sched) {
+		printf("Scheduling policy is switched to Priority. All the %u waiting jobs\nhave been rescheduled.", count);
+	}
 	return 0;
 }
 
@@ -309,7 +382,20 @@ int cmd_priority(int nargs, char **args) {
  *  * The quit command.
  *   */
 int cmd_quit(int nargs, char **args) {
-	printf("Please display performance information before exiting AUbatch!\n");
+	float totalRuns = total - count;
+	if(totalRuns < 1) {
+		printf("Cannot show statistics as not enough processes have finished");
+		exit(0);
+	}
+	printf("Total number of jobs submitted: %u\n", total);
+	float turnAround = turnAroundTime / totalRuns;
+	float cpu = cpuTime / totalRuns;
+	float wait = waitingTime / totalRuns;
+	float throughput = 1 / cpu;
+	printf("Average turnaround time:	%.2f seconds\n", turnAround);
+	printf("Average CPU time:	%.2f seconds\n", cpu);
+	printf("Average waiting time:	%.2f seconds\n", wait);
+	printf("Throughput	%.2f No./second\n", throughput);
         exit(0);
 }
 /*
@@ -379,9 +465,17 @@ void showmenu(const char *name, const char *x[])
 }
 
 static const char *helpmenu[] = {
-        "[run] <job> <time> <priority>       ",
-	"[quit] Exit AUbatch                 ",
-        "[help] Print help menu              ",
+        "run <job> <time> <priority>: submit a job named <job>,    ",
+	"				 execution time is <time>, ",
+	"				 priority is <priority>.   ",
+	"list: display the job status.				   ",
+	"fcfs: change the scheduling policy to FCFS.		   ",
+	"sjf: change the scheduling policy to SJF.		   ",
+	"priority: change the scheduling policy to priority.	   ",
+	"test: <benchmark> <policy> <num_of_jobs> <priority_levels>",
+	"<min_CPU_time> <max_CPU_time>				   ",
+	"quit: exit AUbatch                 			   ",
+        "help: print this menu              			   ",
         /* Please add more menu options below */
         NULL
 };
@@ -390,7 +484,19 @@ int cmd_helpmenu(int n, char **a)
 {
         (void)n;
         (void)a;
-        showmenu("AUbatch help menu", helpmenu);
+        //showmenu("AUbatch help menu", helpmenu);
+	char *help;
+	printf("run <job> <time> <priority>: submit a job named <job>,  	\n");
+	printf("			     execution time is <time>,  	\n");
+	printf("			     priority is <priority>.		\n");
+	printf("list: display the job status.					\n");
+	printf("fcfs: change the scheduling policy to FCFS.			\n");
+	printf("sjf: change the scheduling policy to SJF.			\n");
+	printf("priority: change the scheduling policy to priority.		\n");
+	printf("test: <benchmark> <policy> <num_of_jobs> <priority_levels>	\n");
+	printf("      <min_CPU_time> <max_CPU_time>				\n");
+	printf("quit: exit AUbatch                 			   	\n");
+        printf("help: print this menu              			   	\n");
         return 0;
 }
 
@@ -402,7 +508,7 @@ int main() {
 	buf_head = 0;
 	buf_tail = 0;
 		
-	printf("\n Welcome to Theo's bath job scheduler version 0.12\n enter help for a list of commands.");
+	printf("\n Welcome to Theo's batch job scheduler version 1.0\n Type 'help' to find more about AUbatch commands.");
 	pthread_t commandLineThread, executorThread;
 	
 	//concurrent threads
@@ -496,9 +602,13 @@ void *executor() {
 	}
 	count--;
 	sprintf(arg1,"%s",jobBuffer[buf_tail].name);
-	sprintf(arg2,"%u",jobBuffer[buf_tail].burst);	
+	sprintf(arg2,"%u",jobBuffer[buf_tail].burst);
+	time_t startWait = jobBuffer[buf_tail].arrival;
+	int cTime = jobBuffer[buf_tail].burst;
+	time_t startTime = time(NULL);
+	oneProcess = 1;
 	pid_t run = fork();
-	
+
 	if(run == 0) {
 		execv("./process",(char*[]){"./process",arg1,arg2,NULL});
 	}
@@ -509,5 +619,19 @@ void *executor() {
 	pthread_cond_signal(&cmd_buf_not_full);
 	pthread_mutex_unlock(&cmd_queue_lock);
 	wait();
-	} //end for loop
+	time_t finishTime = time(NULL);
+	time_t runTime = finishTime - startTime;
+	time_t waitTime = startTime - startWait;
+	cpuTime = cpuTime + runTime;
+	cpuTimeT = cpuTime;
+	expectedWaitingTime = expectedWaitingTime - cTime;
+	waitingTime = waitingTime + waitTime;
+	waitingTimeT = waitingTime;
+	turnAroundTime = turnAroundTime + runTime + waitTime;
+	turnAroundTimeT = turnAroundTime;
+	if (count == 0) {
+		sleep(20);
+		twoProcess = 0;
+	}
+	}
 }
