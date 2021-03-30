@@ -1,0 +1,103 @@
+Script started on 2021-03-18 18:48:25-0500
+]0;theo@DESKTOP-SKUNVJA: /mnt/c/COMP_7500/project_3[01;32mtheo@DESKTOP-SKUNVJA[00m:[01;34m/mnt/c/COMP_7500/project_3[00m$ make
+cc   -pthread -w  aubatch.c   -o aubatch
+cc   -pthread -w  process.c   -o process
+]0;theo@DESKTOP-SKUNVJA: /mnt/c/COMP_7500/project_3[01;32mtheo@DESKTOP-SKUNVJA[00m:[01;34m/mnt/c/COMP_7500/project_3[00m$ ./aubatch
+
+ Welcome to Theo's batch job scheduler version 1.0
+ Type 'help' to find more about AUbatch commands.
+>test testSJF f 5 3 1 5
+
+Wrong number of arguments
+
+>test testSJF sjf 5 3 1 5
+Total number of jobs submitted: 5
+Average turnaround time:	4.60 seconds
+Average CPU time:		1.80 seconds
+Average waiting time:		2.80 seconds
+Throughput			0.556 No./second
+
+>runa    a 20 25
+Job a was submitted.
+Total number of jobs in the queue: 0
+Expected waiting time: 20 seconds
+Scheduling Policy: SJF.
+
+>run b 20 26
+Job b was submitted.
+Total number of jobs in the queue: 1
+Expected waiting time: 40 seconds
+Scheduling Policy: SJF.
+
+>run c 19 22
+Job c was submitted.
+Total number of jobs in the queue: 2
+Expected waiting time: 59 seconds
+Scheduling Policy: SJF.
+
+>run d 19 20
+Job d was submitted.
+Total number of jobs in the queue: 3
+Expected waiting time: 78 seconds
+Scheduling Policy: SJF.
+
+>fcfs
+Scheduling policy is switched to FCFS. All the 3 waiting jobs
+have been rescheduled.
+>list
+
+Total Number of jobs in the queue: 3
+Scheduling Policy: FCFS.
+Name	CPU_Time	Priority	Arrival_time	Progress
+a	20		25		18:49:29	RUN
+b	20		26		18:49:34	
+c	19		22		18:49:36	
+d	19		20		18:49:43	
+
+>sjf
+Scheduling policy is switched to SJF. All the 2 waiting jobs
+have been rescheduled.
+>list
+
+Total Number of jobs in the queue: 2
+Scheduling Policy: SJF.
+Name	CPU_Time	Priority	Arrival_time	Progress
+b	20		26		18:49:34	RUN
+c	19		22		18:49:36	
+d	19		20		18:49:43	
+
+>priority
+Scheduling policy is switched to Priority. All the 2 waiting jobs
+have been rescheduled.
+>list
+
+Total Number of jobs in the queue: 2
+Scheduling Policy: Priority.
+Name	CPU_Time	Priority	Arrival_time	Progress
+b	20		26		18:49:34	RUN
+d	19		20		18:49:43	
+c	19		22		18:49:36	
+
+>help
+run <job> <time> <priority>: submit a job named <job>,  	
+			     execution time is <time>,  	
+			     priority is <priority>.		
+list: display the job status.					
+fcfs: change the scheduling policy to FCFS.			
+sjf: change the scheduling policy to SJF.			
+priority: change the scheduling policy to priority.		
+test: <benchmark> <policy> <num_of_jobs> <priority_levels>	
+      <min_CPU_time> <max_CPU_time>				
+quit: exit AUbatch                 			   	
+help: print this menu              			   	
+
+>quit    quit
+Total number of jobs submitted: 9
+Average turnaround time:	13.67 seconds
+Average CPU time:		7.56 seconds
+Average waiting time:		6.11 seconds
+Throughput			0.132 No./second
+]0;theo@DESKTOP-SKUNVJA: /mnt/c/COMP_7500/project_3[01;32mtheo@DESKTOP-SKUNVJA[00m:[01;34m/mnt/c/COMP_7500/project_3[00m$ exit
+exit
+
+Script done on 2021-03-18 18:50:35-0500
