@@ -37,7 +37,59 @@ typedef uint8_t Extent[32];
 //pointer to a buffer of memory holding the contents of disk block 0 (e), and an integer index
 // which tells which extent from block zero (extent numbers start with 0) to use to make the
 // DirStructType value to return. 
-DirStructType *mkDirStruct(int index,uint8_t *e); 
+DirStructType *mkDirStruct(int index,uint8_t *e) {
+	DirStructType *output;
+	int size = sizeof(output);
+	output = malloc(size);
+	//status
+	int locStat = (e+index*EXTENT_SIZE)[0];
+	output -> status = locStat;
+	int i;
+	int j = 0;//current char
+	//name
+	for (i = 0; i < 9; i++){
+		int loc = (e+index*EXTENT_SIZE)[i];
+		if (loc == ' ') {
+			output -> name[j] = '\0'; //end of name
+			break;
+		}
+		else {
+			output -> name[j] = loc;
+		}
+		j++;
+	}
+	j = 0;//reset
+	//extension
+	for (i = 0; i < 4; i++) {
+		int loc = (e+index*EXTENT_SIZE)[i];
+		if (loc == ' ') {
+			output -> extension[j] = '\0';
+			break;
+		}
+		else {
+			output -> extension[j] = (loc);
+		}
+		j++;
+	}
+	//bytes
+	int locXL = (e+index*EXTENT_SIZE)[12];
+	int locBC = (e+index*EXTENT_SIZE)[13];
+	int locXH = (e+index*EXTENT_SIZE)[14];//is it needed?
+	int locRC = (e+index*EXTENT_SIZE)[15];
+	output -> XL = locXL;
+	output -> BC = locBC;
+	output -> XH = locXH; //is it needed?
+	output -> RC = locRC;
+	//block
+	j = 0;//reset
+	for(i = 0; i < 16;i++) {
+		int loc = (e+index*EXTENT_SIZE)[i];
+		output -> blocks[j] = loc;
+		j++;
+	}
+	//return 
+	return output;
+}	
 
 // function to write contents of a DirStructType struct back to the specified index of the extent
 // in block of memory (disk block 0) pointed to by e
