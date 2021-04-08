@@ -20,6 +20,8 @@ uint8_t RC;
 uint8_t blocks[BLOCKS_PER_EXTENT]; // array of disk sectors used
 } DirStructType;
 
+//globals
+bool freeList[256];
 
 /* XL and XH store the extent number, bits 5-7 of XL are zero, bits 0-4 are
    low-order bits of extent number, bits 6-7 of XH are zero, bits 0-5 hold high
@@ -135,7 +137,25 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e) {
 // populate the FreeList global data structure. freeList[i] == true means 
 // that block i of the disk is free. block zero is never free, since it holds
 // the directory. freeList[i] == false means the block is in use. 
-void makeFreeList(); 
+void makeFreeList() {
+	int i;
+	int j;
+	dirStructType *extent;
+	uint8_t buff[1024];
+	//set 0 to false
+	freeList[0] = false;
+	//set the rest to true
+	for (i = 1; i < 256; i++) { //check on total number
+		freeList[i] = true;
+	}
+	// EXTENT
+	for (i = 0; i < 32; i++) {
+		extent = mkDirStruct(i,buff);
+		for()
+	}
+	
+
+}
 // debugging function, print out the contents of the free list in 16 rows of 16, with each 
 // row prefixed by the 2-digit hex address of the first block in that row. Denote a used
 // block with a *, a free block with a . 
