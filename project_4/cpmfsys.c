@@ -113,7 +113,6 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e) {
 	for(i = 9; i < 12; i++) {
 		if (d -> extension[j] != '\0') {
 			(e+index*EXTENT_SIZE)[i] = ' ';
-			break;
 		}
 		else {
 			(e+index*EXTENT_SIZE)[i] = d -> extension[j];
@@ -140,7 +139,7 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e) {
 void makeFreeList() {
 	int i;
 	int j;
-	dirStructType *extent;
+	DirStructType *extent;
 	uint8_t buff[1024];
 	//set 0 to false
 	freeList[0] = false;
@@ -151,16 +150,40 @@ void makeFreeList() {
 	// EXTENT
 	for (i = 0; i < 32; i++) {
 		extent = mkDirStruct(i,buff);
-		for()
+		if (extent -> status != 0x5e) {
+			for(j = 0; j < 16; j++) {
+				if (extent -> blocks[j] != 0){
+					freeList[(int)extent -> blocks[j]] = false;
+				}
+			}	
+		}
 	}
-	
-
 }
 // debugging function, print out the contents of the free list in 16 rows of 16, with each 
 // row prefixed by the 2-digit hex address of the first block in that row. Denote a used
 // block with a *, a free block with a . 
-void printFreeList(); 
-
+void printFreeList() { 
+	int i;
+	int j;
+	//set to 0
+	int k = 0;
+	printf("FREE BLOCK LIST: (* means in-use)");
+	printf("\n");
+	for (i = 0; i < 16; i++) {
+		printf("%x0: ", i);
+		for (j = 0; j < 16; j++) {
+			if(freeList[k] == true) {
+				printf(". ");
+				k++;
+			}
+			else {
+				printf("* ");
+				k++;
+			}
+		}
+		printf("\n");
+	}
+}
 
 // internal function, returns -1 for illegal name or name not found
 // otherwise returns extent nunber 0-31
