@@ -42,53 +42,38 @@ typedef uint8_t Extent[32];
 // which tells which extent from block zero (extent numbers start with 0) to use to make the
 // DirStructType value to return. 
 DirStructType *mkDirStruct(int index,uint8_t *e) {
-	printf("aww fuck");
 	DirStructType *output = malloc(sizeof(output));
-	printf("made it here");
-	//status
-	int locStat = (e+index*EXTENT_SIZE)[0];
-	output -> status = locStat;
+	//statu
+	uint8_t *loc = (e+index*EXTENT_SIZE);
+	output -> status = loc[0];
 	int i;
 	int j = 1;//current char
 	//name
-	for(i = 1; i < 9; i++){
-		int loc = (e+index*EXTENT_SIZE)[i];
-		if (loc == ' ') {
-			output -> name[j] = '\0'; //end of name
-			break;
-		}
-		else {
-			output -> name[j] = loc;
-		}
+	for (i = 0; i < 8; i++) {
+		output -> name[i] = ' ';
+		output -> name[i] = loc[j];
 		j++;
 	}
-	j = 0;//reset
+	//terminator
+	output -> name[8] = '\0';
+	
 	//extension
-	for(i = 9; i < 12; i++) {
-		int loc = (e+index*EXTENT_SIZE)[i];
-		if (loc == ' ') {
-			output -> extension[j] = '\0';
-			break;
-		}
-		else {
-			output -> extension[j] = (loc);
-		}
+	for (i = 0; i < 3; i++) {
+		output -> extension[i] = ' ';
+		output -> extension[i] = loc[j];
 		j++;
 	}
+	//teminator
+	output - > extension[3] = '\0';
+
 	//bytes
-	int locXL = (e+index*EXTENT_SIZE)[12];
-	int locBC = (e+index*EXTENT_SIZE)[13];
-	int locXH = (e+index*EXTENT_SIZE)[14];//is it needed?
-	int locRC = (e+index*EXTENT_SIZE)[15];
-	output -> XL = locXL;
-	output -> BC = locBC;
-	output -> XH = locXH; //is it needed?
-	output -> RC = locRC;
+	output -> XL = loc[12];
+	output -> BC = loc[13];
+	output -> XH = loc[14]; //is it needed?
+	output -> RC = loc[15];
 	//block
-	j = 0;//reset
-	for(i = 16; i < 32; i++) {
-		int loc = (e+index*EXTENT_SIZE)[i];
-		output -> blocks[j] = loc;
+	for(i = 0; i < 16; i++) {
+		output -> blocks[i] = loc[j];
 		j++;
 	}
 	//return 
