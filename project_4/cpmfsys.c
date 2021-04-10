@@ -56,7 +56,7 @@ DirStructType *mkDirStruct(int index,uint8_t *e) {
 	}
 	//terminator
 	output -> name[8] = '\0';
-	j++;	
+	j = 9;	
 	//extension
 	for (i = 0; i < 3; i++) {
 		output -> extension[i] = ' ';
@@ -64,8 +64,8 @@ DirStructType *mkDirStruct(int index,uint8_t *e) {
 		j++;
 	}
 	//teminator
-	output - > extension[3] = '\0';
-	j++;
+	output -> extension[3] = '\0';
+	j = 16;
 	//bytes
 	output -> XL = loc[12];
 	output -> BC = loc[13];
