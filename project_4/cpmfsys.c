@@ -4,11 +4,11 @@
 #include  <stdbool.h> 
 #include <string.h> 
 #include <stdio.h> 
-
+#include "cpmfsys.h"
 #define EXTENT_SIZE 32
 #define BLOCKS_PER_EXTENT 16 
 #define debugging false
-
+/*
 typedef struct dirStruct { 
 uint8_t status; // 0xe5 = unused, 0-16 = user number
 char  name[9]; // no need to support attributes in msb  of bytes 0,1,2,7
@@ -33,6 +33,8 @@ bool freeList[256];
    
 */ 
 
+
+bool freeList[256];
 typedef uint8_t Extent[32];
 
 //function to allocate memory for a DirStructType (see above), and populate it, given a
@@ -40,14 +42,14 @@ typedef uint8_t Extent[32];
 // which tells which extent from block zero (extent numbers start with 0) to use to make the
 // DirStructType value to return. 
 DirStructType *mkDirStruct(int index,uint8_t *e) {
-	DirStructType *output;
-	int size = sizeof(output);
-	output = malloc(size);
+	printf("aww fuck");
+	DirStructType *output = malloc(sizeof(output));
+	printf("made it here");
 	//status
 	int locStat = (e+index*EXTENT_SIZE)[0];
 	output -> status = locStat;
 	int i;
-	int j = 0;//current char
+	int j = 1;//current char
 	//name
 	for(i = 1; i < 9; i++){
 		int loc = (e+index*EXTENT_SIZE)[i];
@@ -139,8 +141,7 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e) {
 void makeFreeList() {
 	int i;
 	int j;
-	DirStructType *extent;
-	uint8_t buff[1024];
+	uint8_t *block0 = malloc(1024);
 	//set 0 to false
 	freeList[0] = false;
 	//set the rest to true
@@ -148,9 +149,10 @@ void makeFreeList() {
 		freeList[i] = true;
 	}
 	// EXTENT
+	blockRead(block0, 0);
 	for (i = 0; i < 32; i++) {
-		extent = mkDirStruct(i,buff);
-		if (extent -> status != 0x5e) {
+		DirStructType *extent = mkDirStruct(i, block0);
+		if (extent -> status != 0xe5) {
 			for(j = 0; j < 16; j++) {
 				if (extent -> blocks[j] != 0){
 					freeList[(int)extent -> blocks[j]] = false;
@@ -187,11 +189,16 @@ void printFreeList() {
 
 // internal function, returns -1 for illegal name or name not found
 // otherwise returns extent nunber 0-31
-int findExtentWithName(char *name, uint8_t *block0); 
+int findExtentWithName(char *name, uint8_t *block0) {
+
+	return 1;
+}
 
 // internal function, returns true for legal name (8.3 format), false for illegal
 // (name or extension too long, name blank, or  illegal characters in name or extension)
-bool checkLegalName(char *name); 
+bool checkLegalName(char *name) {
+	return true;
+}
 
 
 // print the file directory to stdout. Each filename should be printed on its own line, 
@@ -200,7 +207,9 @@ bool checkLegalName(char *name);
 // the dot anyway, e.g. "myfile. 234" would indicate a file whose name was myfile, with no 
 // extension and a size of 234 bytes. This function returns no error codes, since it should
 // never fail unless something is seriously wrong with the disk 
-void cpmDir(); 
+void cpmDir() {
+
+}
 
 // error codes for next five functions (not all errors apply to all 5 functions)  
 /* 
@@ -213,24 +222,30 @@ void cpmDir();
 
 //read directory block, 
 // modify the extent for file named oldName with newName, and write to the disk
-int cpmRename(char *oldName, char * newName); 
+int cpmRename(char *oldName, char * newName) {
+	return 1;
+}	
 
 // delete the file named name, and free its disk blocks in the free list 
-int  cpmDelete(char * name); 
+int  cpmDelete(char * name) {
+	return 1;
+}
 
 // following functions need not be implemented for Lab 2 
 
-int  cpmCopy(char *oldName, char *newName); 
+int  cpmCopy(char *oldName, char *newName) {
+	return 1;
+}
 
 
-int  cpmOpen( char *fileName, char mode); 
+//int  cpmOpen( char *fileName, char mode);
 
 // non-zero return indicates filePointer did not point to open file 
-int cpmClose(int filePointer); 
+//int cpmClose(int filePointer); 
 
 // returns number of bytes read, 0 = error 
-int cpmRead(int pointer, uint8_t *buffer, int size);
+//int cpmRead(int pointer, uint8_t *buffer, int size);
 
 // returns number of bytes written, 0 = error 
-int cpmWrite(int pointer, uint8_t *buffer, int size);  
+//int cpmWrite(int pointer, uint8_t *buffer, int size);  
 
