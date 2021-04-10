@@ -208,7 +208,31 @@ bool checkLegalName(char *name) {
 // extension and a size of 234 bytes. This function returns no error codes, since it should
 // never fail unless something is seriously wrong with the disk 
 void cpmDir() {
-
+	uint8_t *block0 = malloc(1024);
+	printf("DIRECTORY LISTING\n");
+	blockRead(block0, 0);
+	int i;
+	int j;
+	int blockNumber;
+	int fileLength;
+	for (i = 0; i < 32; i++) {
+		DirStructType *dir =mkDirStruct(i, block0);
+		if (dir -> status != 0xe5) {
+			blockNumber = 0;
+			for (j = 0; j < 16; j++) {
+				if (dir -> blocks[j] != 0) {
+					blockNumber++;
+				}
+			}
+			fileLength = (blockNumber - 1) * BLOCK_SIZE + dir -> RC * 128 + dir -> BC;
+			if (dir -> RC == 0 && dir -> BC == 0) {
+				printf("error: BC and RC are both 0");
+			}
+			else {
+				printf("%s.%s %d\n", dir -> name, dir-> extension, fileLength);
+			}
+		}
+	}
 }
 
 // error codes for next five functions (not all errors apply to all 5 functions)  
