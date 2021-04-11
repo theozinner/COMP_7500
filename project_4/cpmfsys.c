@@ -83,41 +83,38 @@ DirStructType *mkDirStruct(int index,uint8_t *e) {
 // function to write contents of a DirStructType struct back to the specified index of the extent
 // in block of memory (disk block 0) pointed to by e
 void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e) { 
-	(e+index*EXTENT_SIZE)[0] = d -> status;
+	uint8_t *loc = (e+index*EXTENT_SIZE);
+	loc[0] = d -> status;
 	int i;
-	int j = 0;//current char
-	for(i = 1; i < 9; i++){
-		if (d-> name[j] == '\0') {
-			(e+index*EXTENT_SIZE)[i] = ' ';//end of name
-		}
-		else {
-			(e+index*EXTENT_SIZE)[i] = d -> extension[j];
-		}
+	int j = 1;//current char
+	//name
+	for (i = 0; i < 8; i++) {
+		loc[j] = d -> name[i];
 		j++;
 	}
-	j = 0;//reset
-
-	for(i = 9; i < 12; i++) {
-		if (d -> extension[j] != '\0') {
-			(e+index*EXTENT_SIZE)[i] = ' ';
-		}
-		else {
-			(e+index*EXTENT_SIZE)[i] = d -> extension[j];
-		}
+	//terminator
+	loc[8] = ' ';
+	j = 9;
+	//extension
+	for (i = 0; i < 3; i++) {
+		loc[j] = d -> extension[i];
 		j++;
 	}
+	//teminator
+	loc[11] = ' '; 
+	j = 16;
 	//bytes
-	(e+index*EXTENT_SIZE)[12] = d -> XL;
-	(e+index*EXTENT_SIZE)[13] = d -> BC;
-	(e+index*EXTENT_SIZE)[14] = d -> XH;//is it needed?
-	(e+index*EXTENT_SIZE)[15] = d -> RC;
-
+	loc[12] = d -> XL;
+	loc[13] = d -> BC;
+	loc[14] = d -> XH;
+	loc[15] = d -> RC;
 	//block
-	j = 0;//reset
-	for(i = 16; i < 32; i++) {
-		(e+index*EXTENT_SIZE)[i] = d -> blocks[j];
+	for(i = 0; i < 16; i++) {
+		loc[j] = d -> blocks[i];
 		j++;
 	}
+	//blockWrite(e, 0);
+	//makeFreeList();
 }
 
 // populate the FreeList global data structure. freeList[i] == true means 
