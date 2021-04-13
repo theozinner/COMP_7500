@@ -37,6 +37,8 @@ bool freeList[256];
 bool freeList[256];
 typedef uint8_t Extent[32];
 
+void trim(char *stringIn);
+
 //function to allocate memory for a DirStructType (see above), and populate it, given a
 //pointer to a buffer of memory holding the contents of disk block 0 (e), and an integer index
 // which tells which extent from block zero (extent numbers start with 0) to use to make the
@@ -113,8 +115,8 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e) {
 		loc[j] = d -> blocks[i];
 		j++;
 	}
-	//blockWrite(e, 0);
-	//makeFreeList();
+	blockWrite(e, 0);
+	makeFreeList();
 }
 
 // populate the FreeList global data structure. freeList[i] == true means 
@@ -172,14 +174,59 @@ void printFreeList() {
 // internal function, returns -1 for illegal name or name not found
 // otherwise returns extent nunber 0-31
 int findExtentWithName(char *name, uint8_t *block0) {
+	if (checkLegalName(name)) {
+		int i;
+		for (i = 0; i < 32; i++) {
+			DirStructType *d = mkDirStruct(i, block0);
+			int j;
+			int k = 0;
+			char n[9];
+			char e[4];	
+			sprintf(n, "%s", d -> name);
+			sprintf(e, "%s", d -> extension);
+			trim(n);
+			trim(e);
+			//printf("\n%s.%s\n", n,e);
+			char fullName[14];
+			if (strchr(name, '.') == NULL) {
+				sprintf(fullName,"%s", n);
+				if (strcmp(fullName, name) == 0) {		
+					return i;
+				}
+			}
+			else {
+				sprintf(fullName, "%s.%s", n, e);
+				if (strcmp(fullName, name) == 0) {
+					return i;
+				}
+			}
+			
 
-	return 1;
+		}
+	}
+	else return -1;
+}
+
+void trim(char *stringIn) {
+	int i;
+	int j = 0;
+	for (i = 0; stringIn[i]; i++) {
+		stringIn[i] = stringIn[i+j];
+		if ((stringIn[i]) == ' ') {
+			j++;
+			i--;
+		}
+	}
 }
 
 // internal function, returns true for legal name (8.3 format), false for illegal
 // (name or extension too long, name blank, or  illegal characters in name or extension)
 bool checkLegalName(char *name) {
-	return true;
+	int length = strlen(name);
+	if (length == 0) {
+		return false;
+	}
+	return isalnum(name[0]);
 }
 
 
@@ -198,20 +245,27 @@ void cpmDir() {
 	int blockNumber;
 	int fileLength;
 	for (i = 0; i < 32; i++) {
-		DirStructType *dir =mkDirStruct(i, block0);
-		if (dir -> status != 0xe5) {
+		DirStructType *d =mkDirStruct(i, block0);
+		if (d -> status != 0xe5) {
 			blockNumber = 0;
 			for (j = 0; j < 16; j++) {
-				if (dir -> blocks[j] != 0) {
+				if (d -> blocks[j] != 0) {
 					blockNumber++;
 				}
 			}
-			fileLength = (blockNumber - 1) * BLOCK_SIZE + dir -> RC * 128 + dir -> BC;
-			if (dir -> RC == 0 && dir -> BC == 0) {
+			fileLength = (blockNumber - 1) * BLOCK_SIZE + d -> RC * 128 + d -> BC;
+			if (d -> RC == 0 && d -> BC == 0) {
 				printf("error: BC and RC are both 0");
 			}
 			else {
-				printf("%s.%s %d\n", dir -> name, dir-> extension, fileLength);
+				char n[9];
+				char e[4];
+				sprintf(n, "%s", d -> name);
+				sprintf(e, "%s", d -> extension);
+				trim(n);
+				trim(e);
+				
+				printf("%s.%s %d\n", n, e, fileLength);
 			}
 		}
 	}
@@ -234,7 +288,18 @@ int cpmRename(char *oldName, char * newName) {
 
 // delete the file named name, and free its disk blocks in the free list 
 int  cpmDelete(char * name) {
-	return 1;
+	uint8_t *block0 = malloc(1024);
+	blockRead(block0, 0);
+	int del = findExtentWithName(name, block0);
+	if (del == -1) {
+		return -1;
+	}
+	else {
+		DirStructType *d = mkDirStruct(del, block0);
+		d -> status = 0xe5;
+		writeDirStruct(d, del, block0);
+		return 0;
+	}
 }
 
 // following functions need not be implemented for Lab 2 
