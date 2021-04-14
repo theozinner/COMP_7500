@@ -95,7 +95,7 @@ void writeDirStruct(DirStructType *d, uint8_t index, uint8_t *e) {
 		j++;
 	}
 	//terminator
-	loc[8] = ' ';
+	loc[9] = ' ';
 	j = 9;
 	//extension
 	for (i = 0; i < 3; i++) {
@@ -186,7 +186,6 @@ int findExtentWithName(char *name, uint8_t *block0) {
 			sprintf(e, "%s", d -> extension);
 			trim(n);
 			trim(e);
-			//printf("\n%s.%s\n", n,e);
 			char fullName[14];
 			if (strchr(name, '.') == NULL) {
 				sprintf(fullName,"%s", n);
@@ -283,7 +282,52 @@ void cpmDir() {
 //read directory block, 
 // modify the extent for file named oldName with newName, and write to the disk
 int cpmRename(char *oldName, char * newName) {
-	return 1;
+	if (checkLegalName(newName)) {
+		uint8_t *block0 = malloc(1024);
+		blockRead(block0, 0);
+		int ren = findExtentWithName(oldName, block0);
+		DirStructType *d = mkDirStruct(ren, block0);
+		if (ren == -1) {
+			return -1;
+		}
+		else {
+			char n[9];
+			char e[4];
+			sprintf(n, "         ");
+			sprintf(e, "    ");
+			int i;
+			int j = 0;
+			for (i = 0; i < 8; i++) {
+				if (newName[i] == '.') {
+					j++;
+					break;
+				}
+				else {
+					n[i] = newName[i];
+					j++;
+				}
+			}
+			if (strchr(oldName, '.') == NULL) {
+				j++;
+			}
+			for(i = 0; i < 3; i++) {
+				if(isalnum(newName[j])) {
+					e[i] = newName[j];
+				}
+				else {
+					e[i] = ' ';
+				}
+				j++;
+			}
+			sprintf(d -> name,"%s", n);
+			sprintf(d -> extension, "%s", e);
+			writeDirStruct(d, ren, block0);
+			return 0;
+		}
+	}
+	else {
+		return -2;
+	}
 }	
 
 // delete the file named name, and free its disk blocks in the free list 
