@@ -1,3 +1,11 @@
+/*
+ * cpmfsys.c
+ * Theo Zinner, tvz0001, 90502834
+ * COMP7500 Dr. Qin
+ * I started with Dr. Qin's code from canvas that provided the stubs.
+ * I used the following website to look up c syntax:
+ * geeksforgeek.org, cpluscplus.com, stackoverflow.com, and tutorialspoint.com
+*/
 #include <stdint.h> 
 #include <stdlib.h> 
 #include "diskSimulator.h"
@@ -9,21 +17,7 @@
 #define BLOCKS_PER_EXTENT 16 
 #define debugging false
 /*
-typedef struct dirStruct { 
-uint8_t status; // 0xe5 = unused, 0-16 = user number
-char  name[9]; // no need to support attributes in msb  of bytes 0,1,2,7
-char  extension[4]; // no need to support attributes in msb  of bytes 0,1,2
-uint8_t XL; // see below for these 4  bytes' meaning
-uint8_t BC; 
-uint8_t XH; 
-uint8_t RC;  
-uint8_t blocks[BLOCKS_PER_EXTENT]; // array of disk sectors used
-} DirStructType;
-
-//globals
-bool freeList[256];
-
-/* XL and XH store the extent number, bits 5-7 of XL are zero, bits 0-4 are
+   XL and XH store the extent number, bits 5-7 of XL are zero, bits 0-4 are
    low-order bits of extent number, bits 6-7 of XH are zero, bits 0-5 hold high
    -order bits of extent number
    
@@ -33,10 +27,11 @@ bool freeList[256];
    
 */ 
 
-
+//globals
 bool freeList[256];
 typedef uint8_t Extent[32];
 
+//trims strings
 void trim(char *stringIn);
 
 //function to allocate memory for a DirStructType (see above), and populate it, given a
@@ -205,7 +200,7 @@ int findExtentWithName(char *name, uint8_t *block0) {
 	}
 	else return -1;
 }
-
+//this function trims a string passed as a pointer
 void trim(char *stringIn) {
 	int i;
 	int j = 0;
@@ -345,22 +340,4 @@ int  cpmDelete(char * name) {
 		return 0;
 	}
 }
-
-// following functions need not be implemented for Lab 2 
-
-int  cpmCopy(char *oldName, char *newName) {
-	return 1;
-}
-
-
-//int  cpmOpen( char *fileName, char mode);
-
-// non-zero return indicates filePointer did not point to open file 
-//int cpmClose(int filePointer); 
-
-// returns number of bytes read, 0 = error 
-//int cpmRead(int pointer, uint8_t *buffer, int size);
-
-// returns number of bytes written, 0 = error 
-//int cpmWrite(int pointer, uint8_t *buffer, int size);  
 
